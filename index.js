@@ -1,10 +1,13 @@
 const semaphores = new Set()
 
 function createSemaphoreMiddleware() {
-  return ({ dispatch, getState }) => {
+  return () => {
     return next => action => {
-      for (let semaphore of semaphores) semaphore(action)
-      return next(action)
+      const result = next(action)
+      for (let semaphore of semaphores) {
+        semaphore(action)
+      }
+      return result
     }
   }
 }
@@ -21,8 +24,11 @@ function semaphore(resolvePattern, rejectPattern) {
   let semaphoreInstance
   return new Promise((resolve, reject) => {
     semaphoreInstance = action => {
-      if (resolveOn(action)) resolve(action)
-      else if (rejectOn && rejectOn(action)) reject(action)
+      if (resolveOn(action)) {
+        resolve(action)
+      } else if (rejectOn && rejectOn(action)) {
+        reject(action)
+      }
     }
     semaphores.add(semaphoreInstance)
   })
